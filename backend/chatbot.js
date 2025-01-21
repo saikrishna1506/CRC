@@ -88,7 +88,7 @@ app.use(cors()); // Add this line to enable CORS
 app.use(bodyParser.json());
 app.get('/',(req,res)=>{
   console.log("hello server");
-  return res.json({ response: 'Hello World!' });
+   res.json("Hello World!");
 })
 // API to handle chatbot interaction
 app.post('/chat', async (req, res) => {
