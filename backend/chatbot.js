@@ -3,10 +3,12 @@ const mongoose = require('mongoose');
 const tf = require('@tensorflow/tfjs');
 const use = require('@tensorflow-models/universal-sentence-encoder');
 const bodyParser = require('body-parser');
-const cors = require('cors');
+const cors = require('cors'); // Import cors
+const { intents } = require('./intents');
+const { responses } = require('./responses');
 
 // Mongoose connection setup
-const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/CRCBOT";
+const mongoURI = "mongodb://localhost:27017/CRCBOT";
 
 async function connectToDatabase() {
   try {
@@ -26,6 +28,32 @@ async function loadModel() {
   } catch (err) {
     console.error('Failed to load model', err);
   }
+}
+
+let userContext = {
+  waitingFor: null, // Can be "subject", "semester", "year"
+  subject: null,
+  year: null,
+  semester: null
+};
+
+// Recognize intent using Universal Sentence Encoder
+async function recognizeIntent(userInput) {
+  const userInputEmb = await model.embed([userInput]);
+  let maxScore = -1;
+  let recognizedIntent = null;
+
+  for (const [intent, examples] of Object.entries(intents)) {
+    const examplesEmb = await model.embed(examples);
+    const scores = await tf.matMul(userInputEmb, examplesEmb, false, true).data();
+    const maxExampleScore = Math.max(...scores);
+    if (maxExampleScore > maxScore) {
+      maxScore = maxExampleScore;
+      recognizedIntent = intent;
+    }
+  }
+
+  return recognizedIntent;
 }
 
 // Define paper schema and fetch papers from MongoDB
@@ -53,47 +81,14 @@ async function fetchPapers(subject, year, semester) {
 
 // Express setup
 const app = express();
-app.use(cors({ origin: 'http://localhost:3000' })); // Allow requests from frontend
+
+// Enable CORS for all routes
+// app.use(cors()); // Add this line to enable CORS
+app.use(cors({ origin: 'http://localhost:3000' })); 
 app.use(bodyParser.json());
-
-// Define intents and responses (sample data)
-const intents = {
-  fetch_papers: ["previous papers", "past exam papers", "old papers"],
-  // add more intents as needed
-};
-
-const responses = {
-  fetch_papers: "I can help you find previous papers. Please tell me the subject first.",
-  // add more responses as needed
-};
-
-// Recognize intent using Universal Sentence Encoder
-async function recognizeIntent(userInput) {
-  const userInputEmb = await model.embed([userInput]);
-  let maxScore = -1;
-  let recognizedIntent = null;
-
-  for (const [intent, examples] of Object.entries(intents)) {
-    const examplesEmb = await model.embed(examples);
-    const scores = await tf.matMul(userInputEmb, examplesEmb, false, true).data();
-    const maxExampleScore = Math.max(...scores);
-    if (maxExampleScore > maxScore) {
-      maxScore = maxExampleScore;
-      recognizedIntent = intent;
-    }
-  }
-
-  return recognizedIntent;
-}
-
-// User context
-let userContext = {
-  waitingFor: null, // Can be "subject", "semester", "year"
-  subject: null,
-  year: null,
-  semester: null
-};
-
+app.get("/",(req,res)=>{
+    res.json("hello");
+})
 // API to handle chatbot interaction
 app.post('/chat', async (req, res) => {
   const userInput = req.body.message.trim();
@@ -135,12 +130,9 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// For local development
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, async () => {
+// Start the server
+app.listen(3001, async () => {
   await connectToDatabase();
   await loadModel();
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log('Server running on http://localhost:3001');
 });
-
-module.exports = app;
