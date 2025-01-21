@@ -149,7 +149,6 @@ app.post('/chat', async (req, res) => {
 });
 
 // Export for Vercel serverless functions
-module.exports = app;
 
 // Start loading the model and database connection before server starts listening
 async function initializeApp() {
@@ -164,3 +163,4 @@ async function initializeApp() {
 
 // Initialize the app
 initializeApp();
+module.exports = app;
