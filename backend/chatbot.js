@@ -13,11 +13,10 @@ const mongoURI = "mongodb://localhost:27017/CRCBOT";
 let isDbConnected = false;
 let model; // To hold the loaded Universal Sentence Encoder model
 
-// Ensure database connection
+// Ensure database connection (once when server starts)
 async function connectToDatabase() {
   if (!isDbConnected) {
     try {
-      // Remove deprecated options
       await mongoose.connect(mongoURI);
       console.log('Connected to MongoDB');
       isDbConnected = true;
@@ -27,8 +26,7 @@ async function connectToDatabase() {
   }
 }
 
-
-// Ensure model loading
+// Ensure model loading (once when server starts)
 async function loadModel() {
   if (!model) {
     try {
@@ -107,10 +105,6 @@ app.get("/", (req, res) => {
 // API to handle chatbot interaction
 app.post('/chat', async (req, res) => {
   try {
-    // Ensure DB connection and model loading
-    await connectToDatabase();
-    await loadModel();
-
     const userInput = req.body.message.trim();
 
     if (userContext.waitingFor === 'subject') {
@@ -157,8 +151,16 @@ app.post('/chat', async (req, res) => {
 // Export for Vercel serverless functions
 module.exports = app;
 
-app.listen(3001, async () => {
-  // await connectToDatabase();
-  // await loadModel();
-  console.log('Server running on http://localhost:3001');
-});
+// Start loading the model and database connection before server starts listening
+async function initializeApp() {
+  await connectToDatabase();
+  await loadModel();
+  console.log('App initialized with DB and model.');
+  
+  app.listen(3001, () => {
+    console.log('Server running on http://localhost:3001');
+  });
+}
+
+// Initialize the app
+initializeApp();
