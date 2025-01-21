@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const tf = require('@tensorflow/tfjs');
 const use = require('@tensorflow-models/universal-sentence-encoder');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // Import cors
+const cors = require('cors');
 const { intents } = require('./intents');
 const { responses } = require('./responses');
 
 // Mongoose connection setup
-const mongoURI = "mongodb://localhost:27017/CRCBOT";
+const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/CRCBOT";
 
 async function connectToDatabase() {
   try {
@@ -81,15 +81,13 @@ async function fetchPapers(subject, year, semester) {
 
 // Express setup
 const app = express();
-
-// Enable CORS for all routes
-app.use(cors()); // Add this line to enable CORS
-
+app.use(cors());
 app.use(bodyParser.json());
-app.get("/",(req,res)=>{
-  // console.log("hello server");
-   res.json("Hello World!");
-})
+
+app.get("/", (req, res) => {
+  res.json("Hello World!");
+});
+
 // API to handle chatbot interaction
 app.post('/chat', async (req, res) => {
   const userInput = req.body.message.trim();
@@ -131,9 +129,17 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(3001, async () => {
-  await connectToDatabase();
-  await loadModel();
-  console.log('Server running on http://localhost:3001');
-});
+// Export for Vercel
+module.exports = app;
+
+// For local development
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  (async () => {
+    await connectToDatabase();
+    await loadModel();
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })();
+}
