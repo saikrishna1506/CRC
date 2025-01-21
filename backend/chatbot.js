@@ -92,7 +92,7 @@ const app = express();
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: "*",
   methods: ["GET", "POST"],
   credentials: true,
 }));
