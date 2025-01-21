@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 // MongoDB URI
-const mongoURI = "mongodb://localhost:27017/CRCBOT";
-
+const mongoURI = "mongodb+srv://saikrishna06:pb0mKb6G71HyNmMr@cluster0.czknn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// mongodb://localhost:27017/CRCBOT
 // Paper schema and model
 const paperSchema = new mongoose.Schema({
   subject: String,
@@ -31,7 +31,7 @@ async function insertPapers() {
         link: "https://example.com/physics2022"
       },
       {
-        subject: "Chemistry",
+        subject: "Chemistry001",
         year: 2021,
         semester: 2,
         link: "https://example.com/chemistry2021"
@@ -60,4 +60,5 @@ async function connectToDatabase() {
 }
 
 // Initialize everything
+
 connectToDatabase();

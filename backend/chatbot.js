@@ -9,7 +9,8 @@ const { responses } = require('./responses');
 
 // Mongoose connection setup
 const mongoURI = "mongodb://localhost:27017/CRCBOT";
-
+// const mongoURI = `mongodb+srv://saikrishna06:pb0mKb6G71HyNmMr@cluster0.czknn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+// 
 let isDbConnected = false;
 let model; // To hold the loaded Universal Sentence Encoder model
 
