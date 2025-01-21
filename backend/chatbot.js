@@ -8,76 +8,76 @@ const { intents } = require('./intents');
 const { responses } = require('./responses');
 
 // Mongoose connection setup
-// const mongoURI = "mongodb://localhost:27017/CRCBOT";
+const mongoURI = "mongodb://localhost:27017/CRCBOT";
 
-// async function connectToDatabase() {
-//   try {
-//     await mongoose.connect(mongoURI);
-//     console.log('Connected to MongoDB with Mongoose');
-//   } catch (err) {
-//     console.error('Failed to connect to MongoDB with Mongoose', err);
-//   }
-// }
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(mongoURI);
+    console.log('Connected to MongoDB with Mongoose');
+  } catch (err) {
+    console.error('Failed to connect to MongoDB with Mongoose', err);
+  }
+}
 
 // Load Universal Sentence Encoder model
 let model;
-// async function loadModel() {
-//   try {
-//     model = await use.load();
-//     console.log('Model loaded');
-//   } catch (err) {
-//     console.error('Failed to load model', err);
-//   }
-// }
+async function loadModel() {
+  try {
+    model = await use.load();
+    console.log('Model loaded');
+  } catch (err) {
+    console.error('Failed to load model', err);
+  }
+}
 
-// let userContext = {
-//   waitingFor: null, // Can be "subject", "semester", "year"
-//   subject: null,
-//   year: null,
-//   semester: null
-// };
+let userContext = {
+  waitingFor: null, // Can be "subject", "semester", "year"
+  subject: null,
+  year: null,
+  semester: null
+};
 
 // Recognize intent using Universal Sentence Encoder
-// async function recognizeIntent(userInput) {
-//   const userInputEmb = await model.embed([userInput]);
-//   let maxScore = -1;
-//   let recognizedIntent = null;
+async function recognizeIntent(userInput) {
+  const userInputEmb = await model.embed([userInput]);
+  let maxScore = -1;
+  let recognizedIntent = null;
 
-//   for (const [intent, examples] of Object.entries(intents)) {
-//     const examplesEmb = await model.embed(examples);
-//     const scores = await tf.matMul(userInputEmb, examplesEmb, false, true).data();
-//     const maxExampleScore = Math.max(...scores);
-//     if (maxExampleScore > maxScore) {
-//       maxScore = maxExampleScore;
-//       recognizedIntent = intent;
-//     }
-//   }
+  for (const [intent, examples] of Object.entries(intents)) {
+    const examplesEmb = await model.embed(examples);
+    const scores = await tf.matMul(userInputEmb, examplesEmb, false, true).data();
+    const maxExampleScore = Math.max(...scores);
+    if (maxExampleScore > maxScore) {
+      maxScore = maxExampleScore;
+      recognizedIntent = intent;
+    }
+  }
 
-//   return recognizedIntent;
-// }
+  return recognizedIntent;
+}
 
 // Define paper schema and fetch papers from MongoDB
-// const paperSchema = new mongoose.Schema({
-//   subject: String,
-//   year: Number,
-//   semester: Number,
-//   link: String,
-// });
+const paperSchema = new mongoose.Schema({
+  subject: String,
+  year: Number,
+  semester: Number,
+  link: String,
+});
 
-// const Paper = mongoose.model('papers', paperSchema);
+const Paper = mongoose.model('papers', paperSchema);
 
-// async function fetchPapers(subject, year, semester) {
-//   try {
-//     const papers = await Paper.find({ subject, year, semester });
-//     if (papers.length === 0) {
-//       return `No papers found for subject: ${subject}, year: ${year}, semester: ${semester}.`;
-//     }
-//     return papers.map(paper => paper.link).join('\n');
-//   } catch (err) {
-//     console.error('Error fetching papers', err);
-//     return "An error occurred while fetching papers. Please try again later.";
-//   }
-// }
+async function fetchPapers(subject, year, semester) {
+  try {
+    const papers = await Paper.find({ subject, year, semester });
+    if (papers.length === 0) {
+      return `No papers found for subject: ${subject}, year: ${year}, semester: ${semester}.`;
+    }
+    return papers.map(paper => paper.link).join('\n');
+  } catch (err) {
+    console.error('Error fetching papers', err);
+    return "An error occurred while fetching papers. Please try again later.";
+  }
+}
 
 // Express setup
 const app = express();
@@ -133,7 +133,7 @@ app.post('/chat', async (req, res) => {
 
 // Start the server
 app.listen(3001, async () => {
-  // await connectToDatabase();
-  // await loadModel();
+  await connectToDatabase();
+  await loadModel();
   console.log('Server running on http://localhost:3001');
 });
