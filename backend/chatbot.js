@@ -3,30 +3,38 @@ const mongoose = require('mongoose');
 const tf = require('@tensorflow/tfjs');
 const use = require('@tensorflow-models/universal-sentence-encoder');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // Import cors
+const cors = require('cors');
 const { intents } = require('./intents');
 const { responses } = require('./responses');
 
 // Mongoose connection setup
 const mongoURI = "mongodb://localhost:27017/CRCBOT";
 
+let isDbConnected = false;
+let model; // To hold the loaded Universal Sentence Encoder model
+
+// Ensure database connection
 async function connectToDatabase() {
-  try {
-    await mongoose.connect(mongoURI);
-    console.log('Connected to MongoDB with Mongoose');
-  } catch (err) {
-    console.error('Failed to connect to MongoDB with Mongoose', err);
+  if (!isDbConnected) {
+    try {
+      await mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+      console.log('Connected to MongoDB');
+      isDbConnected = true;
+    } catch (err) {
+      console.error('Failed to connect to MongoDB', err);
+    }
   }
 }
 
-// Load Universal Sentence Encoder model
-let model;
+// Ensure model loading
 async function loadModel() {
-  try {
-    model = await use.load();
-    console.log('Model loaded');
-  } catch (err) {
-    console.error('Failed to load model', err);
+  if (!model) {
+    try {
+      model = await use.load();
+      console.log('Universal Sentence Encoder model loaded');
+    } catch (err) {
+      console.error('Failed to load Universal Sentence Encoder model', err);
+    }
   }
 }
 
@@ -83,62 +91,72 @@ async function fetchPapers(subject, year, semester) {
 const app = express();
 
 // Enable CORS for all routes
-// app.use(cors()); // Add this line to enable CORS
-app.use(
-  cors({
-    origin: ["http://localhost:3000"],
-    methods: ["GET", "POST"],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: ["http://localhost:3000"],
+  methods: ["GET", "POST"],
+  credentials: true,
+}));
 app.use(bodyParser.json());
-app.get("/",(req,res)=>{
-    res.json("hello");
-})
+
+app.get("/", (req, res) => {
+  res.json("Hello! The server is running.");
+});
+
 // API to handle chatbot interaction
 app.post('/chat', async (req, res) => {
-  const userInput = req.body.message.trim();
+  try {
+    // Ensure DB connection and model loading
+    await connectToDatabase();
+    await loadModel();
 
-  if (userContext.waitingFor === 'subject') {
-    userContext.subject = userInput;
-    userContext.waitingFor = 'semester';
-    return res.json({ response: 'Please tell me the semester (e.g., 1, 2, 3, etc.):' });
-  }
+    const userInput = req.body.message.trim();
 
-  if (userContext.waitingFor === 'semester') {
-    userContext.semester = userInput;
-    userContext.waitingFor = 'year';
-    return res.json({ response: 'Please tell me the year (e.g., 2022):' });
-  }
+    if (userContext.waitingFor === 'subject') {
+      userContext.subject = userInput;
+      userContext.waitingFor = 'semester';
+      return res.json({ response: 'Please tell me the semester (e.g., 1, 2, 3, etc.):' });
+    }
 
-  if (userContext.waitingFor === 'year') {
-    userContext.year = userInput;
-    const { subject, year, semester } = userContext;
-    userContext = {}; // Reset context
-    const papers = await fetchPapers(subject, year, semester);
-    return res.json({ response: papers });
-  }
+    if (userContext.waitingFor === 'semester') {
+      userContext.semester = userInput;
+      userContext.waitingFor = 'year';
+      return res.json({ response: 'Please tell me the year (e.g., 2022):' });
+    }
 
-  if (userInput.toLowerCase() === 'quit') {
-    return res.json({ response: 'Goodbye!' });
-  }
+    if (userContext.waitingFor === 'year') {
+      userContext.year = userInput;
+      const { subject, year, semester } = userContext;
+      userContext = {}; // Reset context
+      const papers = await fetchPapers(subject, year, semester);
+      return res.json({ response: papers });
+    }
 
-  const intent = await recognizeIntent(userInput);
-  if (intent === 'fetch_papers') {
-    userContext.waitingFor = 'subject';
-    return res.json({ response: 'Please tell me the subject (e.g., Mathematics, Physics, etc.):' });
-  }
+    if (userInput.toLowerCase() === 'quit') {
+      return res.json({ response: 'Goodbye!' });
+    }
 
-  if (intent && responses[intent]) {
-    return res.json({ response: responses[intent] });
-  } else {
-    return res.json({ response: "I'm sorry, I don't understand that. Can you please rephrase?" });
+    const intent = await recognizeIntent(userInput);
+    if (intent === 'fetch_papers') {
+      userContext.waitingFor = 'subject';
+      return res.json({ response: 'Please tell me the subject (e.g., Mathematics, Physics, etc.):' });
+    }
+
+    if (intent && responses[intent]) {
+      return res.json({ response: responses[intent] });
+    } else {
+      return res.json({ response: "I'm sorry, I don't understand that. Can you please rephrase?" });
+    }
+  } catch (error) {
+    console.error('Error in /chat route:', error);
+    res.status(500).json({ response: 'An error occurred. Please try again later.' });
   }
 });
 
-// Start the server
+// Export for Vercel serverless functions
+module.exports = app;
+
 app.listen(3001, async () => {
-  await connectToDatabase();
-  await loadModel();
+  // await connectToDatabase();
+  // await loadModel();
   console.log('Server running on http://localhost:3001');
 });
