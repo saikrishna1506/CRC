@@ -17,7 +17,8 @@ let model; // To hold the loaded Universal Sentence Encoder model
 async function connectToDatabase() {
   if (!isDbConnected) {
     try {
-      await mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+      // Remove deprecated options
+      await mongoose.connect(mongoURI);
       console.log('Connected to MongoDB');
       isDbConnected = true;
     } catch (err) {
@@ -25,6 +26,7 @@ async function connectToDatabase() {
     }
   }
 }
+
 
 // Ensure model loading
 async function loadModel() {
