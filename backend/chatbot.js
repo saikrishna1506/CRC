@@ -133,7 +133,7 @@ app.post('/chat', async (req, res) => {
 
 // Start the server
 app.listen(3001, async () => {
-  await connectToDatabase();
-  await loadModel();
+  // await connectToDatabase();
+  // await loadModel();
   console.log('Server running on http://localhost:3001');
 });
