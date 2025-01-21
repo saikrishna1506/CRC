@@ -130,16 +130,21 @@ app.post('/chat', async (req, res) => {
 });
 
 // Export for Vercel
-module.exports = app;
 
 // For local development
-if (require.main === module) {
-  const PORT = process.env.PORT || 3001;
-  (async () => {
+// if (require.main === module) {
+  // const PORT = process.env.PORT || 3001;
+  // async () => {
+  //   await connectToDatabase();
+  //   await loadModel();
+  //   app.listen(PORT, () => {
+  //     console.log(`Server running on http://localhost:${PORT}`);
+  //   });
+  // }
+  app.listen(3001, async () => {
     await connectToDatabase();
     await loadModel();
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  })();
-}
+    console.log('Server running on http://localhost:3001');
+  });
+  module.exports = app;
+// }
