@@ -84,7 +84,13 @@ const app = express();
 
 // Enable CORS for all routes
 // app.use(cors()); // Add this line to enable CORS
-app.use(cors({ origin: 'http://localhost:3000' })); 
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 app.get("/",(req,res)=>{
     res.json("hello");
