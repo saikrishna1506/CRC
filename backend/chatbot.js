@@ -77,16 +77,23 @@ const Paper = mongoose.model('papers', paperSchema);
 
 async function fetchPapers(subject, year, semester) {
   try {
-    const papers = await Paper.find({ subject, year, semester });
+    const papers = await Paper.find({
+      subject: { $regex: `^${subject}$`, $options: "i" }, // Case-insensitive match
+      year,
+      semester,
+    });
+
     if (papers.length === 0) {
       return `No papers found for subject: ${subject}, year: ${year}, semester: ${semester}.`;
     }
-    return papers.map(paper => paper.link).join('\n');
+
+    return papers.map((paper) => paper.link).join("\n");
   } catch (err) {
-    console.error('Error fetching papers', err);
+    console.error("Error fetching papers", err);
     return "An error occurred while fetching papers. Please try again later.";
   }
 }
+
 
 // Express setup
 const app = express();
